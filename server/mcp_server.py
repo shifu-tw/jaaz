@@ -169,19 +169,12 @@ def _register_tool_with_input(name: str, tool_def: dict):
 
 def _register_midjourney_tool(name: str, tool_def: dict):
     """Midjourney uses a special handler (async polling, multi-image return)."""
+    from mcp_tools import _generate_midjourney
+
     @mcp_server.tool(name=name, description=tool_def["description"])
     async def handler(prompt: str, canvas_id: str = "", input_images: list[str] | None = None) -> list:
-        # Midjourney handler will be added in Task 7
-        # For now, fall back to standard generation
         cid = canvas_id or "default"
-        return await _generate_image(
-            provider_name=tool_def["provider"],
-            model=tool_def["model"],
-            prompt=prompt,
-            aspect_ratio="1:1",
-            canvas_id=cid,
-            input_images=input_images,
-        )
+        return await _generate_midjourney(prompt=prompt, canvas_id=cid, input_images=input_images)
 
 
 # Planning Prompt
