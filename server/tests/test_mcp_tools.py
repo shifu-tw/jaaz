@@ -33,6 +33,10 @@ def _make_mock_modules():
     mocks["services"] = MagicMock()
     mocks["services.config_service"] = config_mod
 
+    # services.jaaz_service (added by Midjourney handler)
+    jaaz_mod = MagicMock()
+    mocks["services.jaaz_service"] = jaaz_mod
+
     return mocks
 
 
