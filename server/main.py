@@ -8,6 +8,7 @@ print('Importing websocket_router')
 from routers.websocket_router import *  # DO NOT DELETE THIS LINE, OTHERWISE, WEBSOCKET WILL NOT WORK
 print('Importing routers')
 from routers import config_router, image_router, root_router, workspace, canvas, ssl_test, chat_router, settings, tool_confirmation
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI
@@ -28,6 +29,12 @@ from services.tool_service import tool_service
 async def initialize():
     print('Initializing config_service')
     await config_service.initialize()
+    # Register MCP tools after config is loaded (API keys available)
+    try:
+        from mcp_server import register_all_tools
+        register_all_tools()
+    except Exception as e:
+        print(f"⚠️ MCP tools not registered: {e}")
     print('Initializing broadcast_init_done')
     await broadcast_init_done()
 
@@ -45,6 +52,13 @@ async def lifespan(app: FastAPI):
 print('Creating FastAPI app')
 app = FastAPI(lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Include routers
 print('Including routers')
 app.include_router(config_router.router)
@@ -56,6 +70,14 @@ app.include_router(image_router.router)
 app.include_router(ssl_test.router)
 app.include_router(chat_router.router)
 app.include_router(tool_confirmation.router)
+
+# Mount MCP server
+try:
+    from routers.mcp_router import mcp_asgi_app
+    app.mount("/mcp", mcp_asgi_app)
+    print("✅ MCP server mounted at /mcp")
+except Exception as e:
+    print(f"⚠️ MCP server not mounted: {e}")
 
 # Mount the React build directory
 react_build_dir = os.environ.get('UI_DIST_DIR', os.path.join(
@@ -104,4 +126,5 @@ if __name__ == "__main__":
     import uvicorn
     print("🌟Starting server, UI_DIST_DIR:", os.environ.get('UI_DIST_DIR'))
 
-    uvicorn.run(socket_app, host="127.0.0.1", port=args.port)
+    host = os.environ.get("HOST", "127.0.0.1")
+    uvicorn.run(socket_app, host=host, port=args.port)
