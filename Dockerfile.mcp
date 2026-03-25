@@ -1,0 +1,25 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install system dependencies for Pillow
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpng-dev libjpeg-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY server/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY server/ ./server/
+
+# Build React UI (assumes pre-built dist is available)
+COPY react/dist/ ./react-dist/
+
+ENV UI_DIST_DIR=/app/react-dist
+ENV PYTHONUNBUFFERED=1
+ENV HOST=0.0.0.0
+
+WORKDIR /app/server
+EXPOSE 57988
+
+CMD ["python", "main.py", "--port", "57988"]
