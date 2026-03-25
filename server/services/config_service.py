@@ -167,6 +167,19 @@ class ConfigService:
             traceback.print_exc()
             return {"status": "error", "message": str(e)}
 
+    def get_api_key(self, provider: str) -> str:
+        """Get API key for provider. Priority: config.toml > env var."""
+        key = self.app_config.get(provider, {}).get("api_key", "")
+        if key:
+            return key
+        env_map = {
+            "jaaz": "JAAZ_API_KEY",
+            "replicate": "REPLICATE_API_KEY",
+            "openai": "OPENAI_API_KEY",
+            "volces": "VOLCES_API_KEY",
+        }
+        return os.environ.get(env_map.get(provider, ""), "")
+
     def exists_config(self) -> bool:
         return os.path.exists(self.config_file)
 

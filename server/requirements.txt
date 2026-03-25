@@ -1,7 +1,7 @@
 fastapi
 uvicorn[standard]
 anthropic
-mcp
+mcp>=1.26.0
 toml
 pyinstaller
 openai
